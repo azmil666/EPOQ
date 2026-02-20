@@ -55,13 +55,14 @@ Before you begin, ensure you have the following installed on your system:
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/epoq.git
-   cd epoq
+   git clone https://github.com/Sree14hari/EPOQ.git
+   cd EPOQ
    ```
 
 2. **Install Node dependencies**
 
    ```bash
+   cd image-trainer
    npm install
    ```
 
@@ -114,5 +115,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ---
 
 <div align="center">
-  Made with ❤️ by the open-source community
+  Made with ❤️ by the Sreehari R
 </div>
