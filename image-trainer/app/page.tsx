@@ -77,6 +77,8 @@ export default function Home() {
   const [learningRate, setLearningRate] = useState(0.001);
   const [zipDataset, setZipDataset] = useState(false);
   const [onlyZip, setOnlyZip] = useState(false);
+  const [patience, setPatience] = useState(5);
+  const [resumePath, setResumePath] = useState('');
   const [gpuAvailable, setGpuAvailable] = useState<boolean | null>(null);
   const [condaEnvs, setCondaEnvs] = useState<{name: string, isGpu: boolean | null}[]>([]);
   const [selectedEnv, setSelectedEnv] = useState<string>('system');
@@ -323,6 +325,21 @@ export default function Home() {
       console.error(err);
     }
   };
+
+  const handlePickResumePath = async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: 'PyTorch Checkpoint', extensions: ['pth'] }],
+        title: 'Select Checkpoint File to Resume From'
+      });
+      if (selected && typeof selected === 'string') {
+        setResumePath(selected);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
   async function resolvePythonInterpreter(): Promise<string> {
   const candidates = ['python', 'python3', 'py'];
 
@@ -382,6 +399,8 @@ export default function Home() {
       args.push('--num_workers', numWorkers.toString());
       if (zipDataset) args.push('--zip_dataset');
       if (onlyZip) args.push('--only_zip');
+      args.push('--patience', patience.toString());
+      if (resumePath) args.push('--resume', resumePath);
 
       let finalCmd: string;
       let finalArgs = args;
@@ -449,6 +468,13 @@ export default function Home() {
            else if (data.status === 'dataset_zip') {
              addLog(`Dataset zipped at: ${data.path}`, 'success');
            }
+          else if (data.status === 'stopped_early') {
+            addLog(`⏹ Early stopping triggered at epoch ${data.epoch}: ${data.message}`, 'success');
+            setProgress(100);
+          }
+          else if (data.status === 'resumed') {
+            addLog(`▶ Resumed from epoch ${data.message.replace('Resumed from epoch ', '')} (best acc so far: ${data.best_acc})`, 'info');
+          }
           else if (data.status === 'error') {
             addLog(`Error from script: ${data.message}`, 'error');
           }
@@ -830,6 +856,57 @@ const exportAsJson = async () => {
                   >
                     <Save className="w-5 h-5" />
                   </button>
+                </div>
+              </div>
+
+              {/* Early Stopping & Resume */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-wider text-zinc-500 font-semibold flex items-center justify-between">
+                    <span>Early-Stop Patience</span>
+                    <span className="text-zinc-600 normal-case font-normal">{patience} ep</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={patience}
+                    onChange={(e) => setPatience(parseInt(e.target.value) || 1)}
+                    className="w-full bg-black border border-zinc-800 rounded-lg py-2.5 px-3 text-sm text-zinc-300 focus:border-zinc-600 focus:outline-none transition-colors font-mono"
+                  />
+                </div>
+                <div className="space-y-2 flex flex-col justify-end">
+                  <span className="text-xs text-zinc-600">Stops if val loss doesn't improve</span>
+                </div>
+              </div>
+
+              {/* Resume Checkpoint */}
+              <div className="space-y-2">
+                <label className="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Resume from Checkpoint</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={resumePath}
+                    readOnly
+                    placeholder="Optional: select a .pth checkpoint..."
+                    className="w-full bg-black border border-zinc-800 rounded-lg py-2.5 px-3 text-sm text-zinc-300 focus:border-zinc-600 focus:outline-none transition-colors font-mono"
+                  />
+                  <button
+                    onClick={handlePickResumePath}
+                    title="Pick checkpoint file"
+                    className="p-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"
+                  >
+                    <FolderOpen className="w-5 h-5" />
+                  </button>
+                  {resumePath && (
+                    <button
+                      onClick={() => setResumePath('')}
+                      title="Clear"
+                      className="p-2.5 bg-zinc-900 hover:bg-red-900/30 border border-zinc-800 rounded-lg text-zinc-500 hover:text-red-400 transition-colors text-xs font-mono"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               </div>
 
