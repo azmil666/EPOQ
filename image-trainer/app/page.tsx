@@ -169,10 +169,41 @@ export default function Home() {
 
       addLog(`Starting command: python ${args.join(' ')}`, 'info');
 
-      const cmd = Command.create('python', args);
-      commandRef.current = cmd;
+      const possibleCommands = ["python", "python3", "py"];
 
-      cmd.on('close', (data) => {
+let child = null;
+let selectedCommand = null;
+let selectedCmd: Command<string> | null = null;
+
+for (const candidate of possibleCommands) {
+  try {
+    addLog(`Trying executable: ${candidate}`, "info");
+    const testCmd = Command.create(candidate, args);
+    const spawned = await testCmd.spawn();
+
+    child = spawned;
+    selectedCommand = candidate;
+    selectedCmd = testCmd;
+    break;
+  } catch (err) {
+    addLog(`Failed with ${candidate}: ${err}`, "error");
+  }
+}
+
+if (!child || !selectedCmd || !selectedCommand) {
+  addLog("No valid Python executable found on system.", "error");
+  setIsRunning(false);
+  return;
+}
+
+addLog(`Using Python executable: ${selectedCommand}`, "success");
+
+commandRef.current = selectedCmd;
+childRef.current = child;
+setPid(child.pid);
+      
+
+      selectedCmd.on('close', (data) => {
         addLog(`Process finished with code ${data.code}`, data.code === 0 ? 'success' : 'error');
         setIsRunning(false);
         setPid(null);
@@ -181,12 +212,12 @@ export default function Home() {
         }
       });
 
-      cmd.on('error', (error) => {
+      selectedCmd.on('error', (error) => {
         addLog(`Command error: ${error}`, 'error');
         setIsRunning(false);
       });
 
-      cmd.stdout.on('data', (line) => {
+      selectedCmd.stdout.on('data', (line) => {
         try {
           const data = JSON.parse(line);
           
@@ -226,14 +257,11 @@ export default function Home() {
         }
       });
 
-      cmd.stderr.on('data', (line) => {
+      selectedCmd.stderr.on('data', (line) => {
         addLog(line, 'error');
       });
 
-      const child = await cmd.spawn();
-      childRef.current = child; // Store properly
-      setPid(child.pid);
-      addLog(`Process started with PID: ${child.pid}`, 'info');
+      
 
     } catch (err) {
       addLog(`Failed to spawn process: ${err}`, 'error');
