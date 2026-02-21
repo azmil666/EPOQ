@@ -283,6 +283,7 @@ export default function Home() {
   setActiveTab('logs');
   setShowPresets(false);
   setShowExperiments(false);
+  finalAccuracyRef.current = null;
 
   try {
 
