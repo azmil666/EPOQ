@@ -559,7 +559,7 @@ const fetchSystemInfo = async () => {
   return (
     <>
       {!depsChecked && <DependencyWizard onComplete={() => setDepsChecked(true)} />}
-      <div data-theme={isLightMode ? 'light' : 'dark'} className={`min-h-screen font-sans bg-black text-zinc-100 theme-transition ${!depsChecked ? 'hidden' : ''}`}>
+      <div data-theme={isLightMode ? 'light' : 'dark'} className={`min-h-screen font-sans bg-black text-zinc-100 theme-transition ${!depsChecked ? 'h-screen overflow-hidden' : ''}`}>
       {/* Header */}
       <header className="sticky top-0 z-50 flex items-center justify-between bg-black/80 backdrop-blur-md border-b border-zinc-800/50 px-8 py-4 mb-8">
         <div className="flex items-center gap-4">
