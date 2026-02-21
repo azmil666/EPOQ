@@ -9,6 +9,10 @@
     "fs:allow-read-file",
     "fs:allow-read-text-file",
     "shell:allow-open",
+    "fs:allow-write-text-file",
+    "fs:allow-download-write",
+    "fs:allow-home-write",
+    "dialog:allow-save",
     {
   "identifier": "shell:allow-execute",
   "allow": [
