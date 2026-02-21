@@ -9,6 +9,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { FolderOpen, Play, Square, Save, Activity, Terminal, CheckCircle, AlertCircle, BarChart2, Layers, Download, Cpu, Sun, Moon, Database } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -94,7 +96,7 @@ export default function Home() {
   const [matrixImageUrl, setMatrixImageUrl] = useState<string | null>(null);
   const [imageLoadError, setImageLoadError] = useState(false);
   const [activeTab, setActiveTab] = useState<'logs' | 'charts' | 'results' | 'data'>('logs');
-
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   // Tabular / GPU state
   const [tabFile, setTabFile] = useState('');
   const [tabAction, setTabAction] = useState<TabAction>('load');
@@ -271,6 +273,19 @@ export default function Home() {
     }
     loadMatrixImage();
   }, [evalResult]);
+  useEffect(() => {
+  let interval: NodeJS.Timeout;
+
+  if (isRunning) {
+    interval = setInterval(() => {
+      setElapsedSeconds(prev => prev + 1);
+    }, 1000);
+  }
+
+  return () => {
+    if (interval) clearInterval(interval);
+  };
+}, [isRunning]);
 
   const addLog = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
     const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
@@ -321,6 +336,7 @@ export default function Home() {
   throw new Error('No Python interpreter found.');
 }
   const startTraining = async () => {
+    setElapsedSeconds(0);
   let experimentId = '';
 
   if (!datasetPath) {
@@ -456,6 +472,64 @@ export default function Home() {
   } catch (err) {
     addLog(`Failed to spawn process: ${err}`, 'error');
     setIsRunning(false);
+  }
+};
+const formatTime = (seconds: number) => {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  return [
+    hrs > 0 ? String(hrs).padStart(2, '0') : null,
+    String(mins).padStart(2, '0'),
+    String(secs).padStart(2, '0')
+  ].filter(Boolean).join(':');
+};
+const exportAsJson = async () => {
+  try {
+    console.log("Export triggered");
+
+    if (!chartData.length) {
+      addLog("No training data to export.", "error");
+      return;
+    }
+
+    const payload = {
+      metadata: {
+        exported_at: new Date().toISOString(),
+        dataset_path: datasetPath,
+        model,
+        epochs,
+        batch_size: batchSize,
+        learning_rate: learningRate,
+        num_workers: numWorkers,
+        environment: selectedEnv,
+        elapsed_seconds: elapsedSeconds
+      },
+      training_metrics: chartData,
+      final_status: currentStatus,
+      evaluation: evalResult,
+      logs
+    };
+
+    const filePath = await save({
+      filters: [{ name: "JSON", extensions: ["json"] }]
+    });
+
+    if (!filePath) {
+      addLog("Export cancelled.", "info");
+      return;
+    }
+
+    console.log("Saving to:", filePath);
+
+    await writeTextFile(filePath, JSON.stringify(payload, null, 2));
+
+    addLog("Experiment exported successfully.", "success");
+
+  } catch (err) {
+    console.error("EXPORT ERROR:", err);
+    addLog(`Export failed: ${err}`, "error");
   }
 };
 
@@ -793,14 +867,30 @@ export default function Home() {
                         <p className="text-2xl font-light text-white mt-1">
                            {isRunning ? `Epoch ${currentStatus?.epoch || 0} / ${currentStatus?.total_epochs || epochs}` : "Complete"}
                         </p>
+                        <p className="text-xs text-zinc-500 mt-2 font-mono">
+                          Elapsed: {formatTime(elapsedSeconds)}
+                        </p>
                         {currentStatus?.learning_rate && (
                           <p className="text-xs text-zinc-500 mt-1">Learning Rate: {currentStatus.learning_rate}</p>
                         )}
                     </div>
-                    <div className="text-right">
-                       <div className="text-3xl font-bold font-mono text-white tracking-tighter">{currentStatus?.accuracy ? `${(parseFloat(currentStatus.accuracy)*100).toFixed(2)}%` : "0.00%"}</div>
-                       <div className="text-xs text-zinc-500 uppercase tracking-wider mt-1">Accuracy</div>
-                    </div>
+                    <div className="text-right flex flex-col items-end">
+   <div className="text-3xl font-bold font-mono text-white tracking-tighter">
+     {currentStatus?.accuracy ? `${(parseFloat(currentStatus.accuracy)*100).toFixed(2)}%` : "0.00%"}
+   </div>
+   <div className="text-xs text-zinc-500 uppercase tracking-wider mt-1">
+     Accuracy
+   </div>
+
+   {!isRunning && chartData.length > 0 && (
+     <button
+       onClick={exportAsJson}
+       className="mt-3 flex items-center gap-2 px-4 py-2 bg-white text-black hover:bg-zinc-200 text-xs font-semibold rounded-full transition-all shadow"
+     >
+       <Download className="w-3 h-3" />
+       Export JSON
+     </button>
+   )}</div> 
                 </div>
                 <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
                     <div className="h-full bg-white transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
