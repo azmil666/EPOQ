@@ -64,14 +64,41 @@ def build_dataloaders(data_dir, batch_size, num_workers):
     dataset_sizes = {}
     class_names = []
 
+    def apply_subset(dataset, num_classes):
+        length = len(dataset)
+        # Use 10% of data or max 400 samples for the sweep to be extremely fast
+        num_samples = min(400, max(num_classes * 2, int(length * 0.1)))
+        
+        if num_samples >= length:
+            return dataset
+            
+        try:
+            from sklearn.model_selection import train_test_split
+            if hasattr(dataset, 'targets'):
+                targets = dataset.targets
+            elif hasattr(dataset, 'dataset') and hasattr(dataset, 'indices'):
+                targets = [dataset.dataset.targets[i] for i in dataset.indices]
+            else:
+                raise ValueError("No targets array found")
+                
+            subset_idx, _ = train_test_split(list(range(length)), train_size=num_samples, stratify=targets, random_state=42)
+            return Subset(dataset, subset_idx)
+        except Exception:
+            import random
+            random.seed(42)
+            return Subset(dataset, random.sample(list(range(length)), num_samples))
+
     if os.path.isdir(train_dir):
         train_dataset = datasets.ImageFolder(train_dir, data_transforms['train'])
+        class_names = train_dataset.classes
+        train_dataset = apply_subset(train_dataset, len(class_names))
+        
         dataloaders['train'] = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
         dataset_sizes['train'] = len(train_dataset)
-        class_names = train_dataset.classes
 
         if os.path.isdir(val_dir):
             val_dataset = datasets.ImageFolder(val_dir, data_transforms['val'])
+            val_dataset = apply_subset(val_dataset, len(class_names))
             dataloaders['val'] = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
             dataset_sizes['val'] = len(val_dataset)
         else:
@@ -106,13 +133,19 @@ def build_dataloaders(data_dir, batch_size, num_workers):
             train_idx = subset_train.indices
             val_idx = subset_val.indices
 
-        dataset_train = datasets.ImageFolder(data_dir, data_transforms['train'])
-        dataset_val = datasets.ImageFolder(data_dir, data_transforms['val'])
+        base_dataset_train = datasets.ImageFolder(data_dir, data_transforms['train'])
+        base_dataset_val = datasets.ImageFolder(data_dir, data_transforms['val'])
 
-        dataloaders['train'] = DataLoader(Subset(dataset_train, train_idx), batch_size=batch_size, shuffle=True, num_workers=num_workers)
-        dataloaders['val'] = DataLoader(Subset(dataset_val, val_idx), batch_size=batch_size, shuffle=False, num_workers=num_workers)
-        dataset_sizes['train'] = len(train_idx)
-        dataset_sizes['val'] = len(val_idx)
+        dataset_train = Subset(base_dataset_train, train_idx)
+        dataset_val = Subset(base_dataset_val, val_idx)
+        
+        dataset_train = apply_subset(dataset_train, len(class_names))
+        dataset_val = apply_subset(dataset_val, len(class_names))
+
+        dataloaders['train'] = DataLoader(dataset_train, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+        dataloaders['val'] = DataLoader(dataset_val, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+        dataset_sizes['train'] = len(dataset_train)
+        dataset_sizes['val'] = len(dataset_val)
 
     return dataloaders, dataset_sizes, class_names, None
 
