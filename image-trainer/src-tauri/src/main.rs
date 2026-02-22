@@ -142,7 +142,26 @@ async fn check_dependencies(app: tauri::AppHandle) -> Result<String, String> {
         }
     }
 }
+#[tauri::command]
+fn fetch_runs(save_path: String) -> Result<String, String> {
+    use std::fs;
 
+    let runs_dir = format!("{}/experiments", save_path);
+
+    let mut runs = Vec::new();
+
+    if let Ok(entries) = fs::read_dir(&runs_dir) {
+        for entry in entries.flatten() {
+            if let Ok(content) = fs::read_to_string(entry.path()) {
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
+                    runs.push(json);
+                }
+            }
+        }
+    }
+
+    Ok(serde_json::to_string(&runs).unwrap())
+}
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -152,7 +171,8 @@ fn main() {
             run_tabular_processor,
             run_check_gpu,
             get_system_info,
-            check_dependencies
+            check_dependencies,
+            fetch_runs
         ])
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
