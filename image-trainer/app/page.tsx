@@ -136,6 +136,9 @@ export default function Home() {
   const commandRef = useRef<Command<string> | null>(null);
   const childRef = useRef<any>(null);
   const metricsRef = useRef<any[]>([]);
+  // Dataset Analysis State
+  const [datasetStats, setDatasetStats] = useState<any | null>(null);
+  const [analyzingDataset, setAnalyzingDataset] = useState(false);
   // Check GPU availability
   useEffect(() => {
     async function checkGpu() {
@@ -342,10 +345,33 @@ useEffect(() => {
       if (selected && typeof selected === 'string') {
         setDatasetPath(selected);
         if (!savePath) setSavePath(selected);
+        // Auto-analyze the dataset when selected
+        analyzeDataset(selected);
       }
     } catch (err) {
       console.error(err);
       addLog(`Failed to open dialog: ${err}`, 'error');
+    }
+  };
+
+  const analyzeDataset = async (path: string) => {
+    if (!path) return;
+    setAnalyzingDataset(true);
+    setDatasetStats(null);
+    try {
+      const result = await invoke<string>('analyze_dataset', { path });
+      const parsed = JSON.parse(result);
+      setDatasetStats(parsed);
+      if (parsed.status === 'success') {
+        addLog(`Dataset analyzed: ${parsed.total_images} images, ${parsed.class_count} classes`, 'success');
+      } else {
+        addLog(`Dataset analysis failed: ${parsed.message}`, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      addLog(`Failed to analyze dataset: ${err}`, 'error');
+    } finally {
+      setAnalyzingDataset(false);
     }
   };
 
@@ -1025,8 +1051,66 @@ const InsightCard = ({ title, children }: any) => (
                   >
                     <FolderOpen className="w-5 h-5" />
                   </button>
+                  <button 
+                     onClick={() => datasetPath && analyzeDataset(datasetPath)}
+                     disabled={!datasetPath || analyzingDataset}
+                     className="p-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                     title="Analyze Dataset"
+                  >
+                    {analyzingDataset ? (
+                      <div className="w-5 h-5 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Search className="w-5 h-5" />
+                    )}
+                  </button>
                 </div>
               </div>
+
+              {/* Dataset Statistics Display */}
+              {datasetStats && datasetStats.status === 'success' && (
+                <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl space-y-3">
+                  <div className="flex items-center gap-2 text-zinc-300 font-medium">
+                    <Database className="w-4 h-4" />
+                    Dataset Statistics
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-black/40 rounded-lg p-3 border border-zinc-800">
+                      <div className="text-xs text-zinc-500 uppercase tracking-wider">Total Images</div>
+                      <div className="text-lg font-semibold text-white">{datasetStats.total_images}</div>
+                    </div>
+                    <div className="bg-black/40 rounded-lg p-3 border border-zinc-800">
+                      <div className="text-xs text-zinc-500 uppercase tracking-wider">Classes</div>
+                      <div className="text-lg font-semibold text-white">{datasetStats.class_count}</div>
+                    </div>
+                    <div className="bg-black/40 rounded-lg p-3 border border-zinc-800">
+                      <div className="text-xs text-zinc-500 uppercase tracking-wider">Avg Size</div>
+                      <div className="text-lg font-semibold text-white">{datasetStats.avg_image_size || 'N/A'}</div>
+                    </div>
+                    <div className="bg-black/40 rounded-lg p-3 border border-zinc-800">
+                      <div className="text-xs text-zinc-500 uppercase tracking-wider">Splits</div>
+                      <div className="text-lg font-semibold text-white">
+                        {Object.entries(datasetStats.splits || {}).filter(([k, v]: [string, any]) => v > 0).length}
+                      </div>
+                    </div>
+                  </div>
+                  {datasetStats.splits && Object.keys(datasetStats.splits).length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(datasetStats.splits).map(([split, count]: [string, any]) => (
+                        count > 0 && (
+                          <span key={split} className="text-xs bg-zinc-800 text-zinc-300 px-2 py-1 rounded-full">
+                            {split}: {count}
+                          </span>
+                        )
+                      ))}
+                    </div>
+                  )}
+                  {datasetStats.common_sizes && datasetStats.common_sizes.length > 0 && (
+                    <div className="text-xs text-zinc-500">
+                      Common sizes: {datasetStats.common_sizes.map((s: any) => s.size).join(', ')}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Model Selection */}
               <div className="space-y-2">
