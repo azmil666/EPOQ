@@ -967,7 +967,7 @@ const InsightCard = ({ title, children }: any) => (
         </div>
       </header>
 
-      <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 px-8 pb-8">
+      <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 px-8 pb-8 lg:items-start">
         {/* Left Panel: Configuration */}
         <section className="lg:col-span-4 space-y-8">
           <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-2xl p-6 backdrop-blur-sm">
@@ -1030,6 +1030,16 @@ const InsightCard = ({ title, children }: any) => (
                 </div>
               </div>
 
+              {/* Model & Hyperparameters Accordion */}
+              <details className="group border-2 border-white rounded-xl overflow-hidden bg-black text-white" open>
+                <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-white hover:text-black transition-colors">
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-4 h-4" />
+                    <span className="text-sm font-semibold tracking-wide">Model & Hyperparameters</span>
+                  </div>
+                  <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                </summary>
+                <div className="p-4 pt-2 space-y-6">
               {/* Model Selection */}
               <div className="space-y-2">
                 <label className="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Model Architecture</label>
@@ -1128,7 +1138,19 @@ const InsightCard = ({ title, children }: any) => (
                   ))}
                 </div>
               </div>
+                </div>
+              </details>
 
+              {/* Advanced Settings Accordion */}
+              <details className="group border-2 border-white rounded-xl overflow-hidden bg-black text-white">
+                <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-white hover:text-black transition-colors">
+                  <div className="flex items-center gap-2">
+                    <Save className="w-4 h-4" />
+                    <span className="text-sm font-semibold tracking-wide">Advanced Settings</span>
+                  </div>
+                  <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                </summary>
+                <div className="p-4 pt-2 space-y-6">
               {/* Save Path */}
               <div className="space-y-2">
                 <label className="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Checkpoints Output</label>
@@ -1218,17 +1240,20 @@ const InsightCard = ({ title, children }: any) => (
                   </div>
                 </label>
               </div>
-               {/* Data Augmentation */}
-<div className="pt-6 border-t border-zinc-800/50 space-y-4">
-  <div className="flex items-center gap-2 mb-2">
-    <Activity className="w-4 h-4 text-zinc-400" />
-    <span className="text-xs uppercase tracking-wider text-zinc-500 font-semibold">
-      Data Augmentation
-    </span>
-  </div>
-   <p className="text-xs text-zinc-600">
-  Applies random transformations during training only.
-</p>
+                </div>
+              </details>
+
+              {/* Data Augmentation Accordion */}
+              <details className="group border-2 border-white rounded-xl overflow-hidden bg-black text-white">
+                <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-white hover:text-black transition-colors">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4" />
+                    <span className="text-sm font-semibold tracking-wide">Data Augmentation</span>
+                  </div>
+                  <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                </summary>
+                <div className="p-4 pt-2 space-y-4">
+                  <p className="text-xs text-zinc-500">Applies random transformations during training only.</p>
   {/* Horizontal Flip */}
   <label className="flex items-center justify-between cursor-pointer group">
     <span className="text-sm text-zinc-400 group-hover:text-zinc-200 transition-colors">
@@ -1358,14 +1383,20 @@ const InsightCard = ({ title, children }: any) => (
 
 </div>
   
-</div>
-              {/* AutoML Hyperparameter Sweep */}
-              <div className="pt-6 border-t border-zinc-800/50 space-y-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-4 h-4 text-zinc-400" />
-                  <span className="text-xs uppercase tracking-wider text-zinc-500 font-semibold">AutoML Sweep</span>
                 </div>
-                <p className="text-xs text-zinc-600 -mt-2">Automatically find the best learning rate, batch size, and optimizer using Optuna.</p>
+              </details>
+
+              {/* AutoML Hyperparameter Sweep Accordion */}
+              <details className="group border-2 border-white rounded-xl overflow-hidden bg-black text-white">
+                <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-white hover:text-black transition-colors">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4" />
+                    <span className="text-sm font-semibold tracking-wide">AutoML Hyperparameter Sweep</span>
+                  </div>
+                  <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                </summary>
+                <div className="p-4 pt-2 space-y-4">
+                  <p className="text-xs text-zinc-500">Automatically find the best learning rate, batch size, and optimizer using Optuna.</p>
 
                 <div className="flex items-center gap-3">
                   <div className="flex-1 space-y-1">
@@ -1471,13 +1502,14 @@ const InsightCard = ({ title, children }: any) => (
                     )}
                   </div>
                 )}
-              </div>
+                </div>
+              </details>
             </div>
           </div>
         </section>
 
         {/* Right Panel: Output */}
-        <section className="lg:col-span-8 flex flex-col gap-6">
+        <section className="lg:col-span-8 flex flex-col gap-6 lg:sticky lg:top-[120px] lg:h-[calc(100vh-150px)]">
             
            {/* Progress Widget */}
            {(isRunning || progress > 0) && (
@@ -1522,7 +1554,7 @@ const InsightCard = ({ title, children }: any) => (
            )}
 
            {/* Content Tabs */}
-           <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-2xl flex-1 flex flex-col overflow-hidden min-h-[500px] max-h-[80vh] h-[75vh] backdrop-blur-sm">
+           <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-2xl flex-1 flex flex-col overflow-hidden backdrop-blur-sm">
               <div className="flex border-b border-zinc-800/50 px-2 flex-none">
                  <button 
                    onClick={() => setActiveTab('logs')}
