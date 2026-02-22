@@ -1067,58 +1067,53 @@ const InsightCard = ({ title, children }: any) => (
 
                 {/* Dataset Statistics Display */}
                 {datasetStats && datasetStats.status === 'success' && (
-                <div className={cn("mt-4 p-4 border rounded-xl", isLightMode ? "bg-zinc-100 border-zinc-300" : "bg-zinc-900/50 border-zinc-800")}>
-                  <div className="flex items-center justify-between mb-4">
-                  <div className={cn("flex items-center gap-2 text-sm font-medium", isLightMode ? "text-zinc-700" : "text-zinc-200")}>
-                    <div className={cn("p-1.5 rounded-lg", isLightMode ? "bg-zinc-200" : "bg-zinc-800")}>
-                    <Database className={cn("w-4 h-4", isLightMode ? "text-zinc-600" : "text-zinc-300")} />
-                    </div>
-                      <span>Dataset Overview</span>
-                    </div>
-                    <div className="text-xs text-zinc-500 font-mono">
-                      {datasetStats.total_images} images
-                    </div>
+                <details className="group border-2 border-white rounded-xl overflow-hidden bg-black text-white">
+                  <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-white hover:text-black transition-colors">
+                  <div className="flex items-center gap-2">
+                    <Database className="w-4 h-4" />
+                    <span className="text-sm font-semibold tracking-wide">Dataset Overview</span>
                   </div>
-                  
+                  <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                  </summary>
+                  <div className="p-4 pt-2 space-y-6">
                   {/* Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <div className="bg-zinc-200/50 dark:bg-black/30 rounded-lg p-3 border border-zinc-300 light:border-zinc-800">
-                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Total Images</div>
-                      <div className="text-sm font-bold text-zinc-800 dark:text-white mt-1">{datasetStats.total_images}</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-zinc-900/50 rounded-lg p-3 border border-zinc-800">
+                    <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-medium">Total Images</div>
+                    <div className="text-base font-bold text-white mt-1 truncate">{datasetStats.total_images}</div>
                     </div>
-                    <div className="bg-zinc-200/50 dark:bg-black/30 rounded-lg p-3 border border-zinc-300 light:border-zinc-800">
-                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Classes</div>
-                      <div className="text-sm font-bold text-zinc-800 dark:text-white mt-1">{datasetStats.class_count}</div>
+                    <div className="bg-zinc-900/50 rounded-lg p-3 border border-zinc-800">
+                    <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-medium">Classes</div>
+                    <div className="text-base font-bold text-white mt-1 truncate">{datasetStats.class_count}</div>
                     </div>
-                    <div className="bg-zinc-200/50 dark:bg-black/30 rounded-lg p-3 border border-zinc-300 light:border-zinc-800">
-                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Avg Size</div>
-                      <div className="text-sm font-bold text-zinc-800 dark:text-white mt-1 truncate">{datasetStats.avg_image_size || 'N/A'}</div>
+                    <div className="bg-zinc-900/50 rounded-lg p-3 border border-zinc-800">
+                    <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-medium">Avg Size</div>
+                    <div className="text-base font-bold text-white mt-1 truncate">{datasetStats.avg_image_size || 'N/A'}</div>
                     </div>
-                    <div className="bg-zinc-200/50 dark:bg-black/30 rounded-lg p-3 border border-zinc-300 light:border-zinc-800">
-                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Splits</div>
-                      <div className="text-sm font-bold text-zinc-800 dark:text-white mt-1">
+                    <div className="bg-zinc-900/50 rounded-lg p-3 border border-zinc-800">
+                    <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-medium">Splits</div>
+                    <div className="text-base font-bold text-white mt-1 truncate">
                       {Object.entries(datasetStats.splits || {}).filter(([, v]: [string, any]) => v > 0).length}
-                      </div>
                     </div>
                     </div>
-                  
-      
+                    </div>
                   
                   {/* Common Sizes */}
                   {datasetStats.common_sizes && datasetStats.common_sizes.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-zinc-300 light:border-zinc-800">
-                      <div className="text-[10px] text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-1.5 font-semibold">Common Resolutions</div>
-                      <div className="flex flex-wrap gap-1.5">
+                    <div className="pt-4 border-t border-zinc-800/50">
+                    <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-3 font-semibold">Common Resolutions</div>
+                    <div className="flex flex-wrap gap-2">
                       {datasetStats.common_sizes.slice(0, 4).map((s: any, i: number) => (
-                        <span key={i} className="text-xs px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-mono font-medium">
+                      <span key={i} className="text-xs px-3 py-1.5 bg-zinc-900 rounded border border-zinc-800 text-zinc-300 font-mono font-medium hover:border-zinc-700 transition-colors">
                         {s.size}
-                        </span>
+                      </span>
                       ))}
-                      </div>
+                    </div>
                     </div>
                   )}
-                </div>
-              )}
+                  </div>
+                </details>
+                )}
 
               {/* Model & Hyperparameters Accordion */}
               <details className="group border-2 border-white rounded-xl overflow-hidden bg-black text-white" open>
