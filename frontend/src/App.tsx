@@ -8,6 +8,8 @@ import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import Features from "./components/Features";
 import { AuroraText } from "./components/ui/aurora-text";
+import { Terminal, TypingAnimation, AnimatedSpan } from "./components/ui/terminal";
+import { IconCloud } from "./components/ui/icon-cloud"
 
 function App() {
   const heroRef = useRef<HTMLElement>(null);
@@ -37,6 +39,14 @@ function App() {
     { name: "React", src: "/react.svg" },
     { name: "Python", src: "/python.svg" },
   ];
+  const cloudImages = [
+  "/nextdotjs.svg",
+  "/rust.svg",
+  "/tauri.svg",
+  "/pytorch.svg",
+  "/react.svg",
+  "/python.svg",
+]
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-orange-500/30 selection:text-orange-200 overflow-x-hidden">
@@ -132,7 +142,107 @@ function App() {
           </div>
         </div>
       </section>
+     <section
+  id="docs"
+  className="py-28 bg-[#070707] border-t border-white/5 relative overflow-hidden"
+>
+  {/* glow background */}
+  <div className="absolute inset-0 opacity-20 pointer-events-none">
+    <div className="absolute top-0 right-0 w-96 h-96 bg-orange-600/10 blur-[120px]" />
+    <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600/10 blur-[120px]" />
+  </div>
 
+  <div className="max-w-7xl mx-auto px-6 relative z-10">
+    <div className="grid lg:grid-cols-2 gap-20 items-start">
+
+      {/* LEFT COLUMN */}
+      <div>
+        <div className="mb-20">
+          <h2 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">
+            Ready to Start?
+          </h2>
+          <p className="text-white/40 text-lg">
+            Follow these simple steps to run EPOQ locally.
+          </p>
+        </div>
+
+        <div className="space-y-16">
+
+          {/* STEP 1 */}
+          <div className="space-y-6">
+            <h3 className="text-white font-bold text-lg flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center text-sm font-bold">
+                1
+              </span>
+              Clone Repository
+            </h3>
+
+            <Terminal className="bg-black border-white/10" sequence={false}>
+              <AnimatedSpan>
+                <TypingAnimation className="text-green-400">
+                  git clone https://github.com/Sree14hari/EPOQ.git
+                </TypingAnimation>
+              </AnimatedSpan>
+              <AnimatedSpan>
+                <TypingAnimation className="text-green-400">
+                  cd EPOQ
+                </TypingAnimation>
+              </AnimatedSpan>
+            </Terminal>
+          </div>
+
+          {/* STEP 2 */}
+          <div className="space-y-6">
+            <h3 className="text-white font-bold text-lg flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center text-sm font-bold">
+                2
+              </span>
+              Install Dependencies
+            </h3>
+
+            <Terminal className="bg-black border-white/10" sequence={false}>
+              <AnimatedSpan>
+                <TypingAnimation className="text-green-400">
+                  cd image-trainer
+                </TypingAnimation>
+              </AnimatedSpan>
+              <AnimatedSpan>
+                <TypingAnimation className="text-green-400">
+                  npm install
+                </TypingAnimation>
+              </AnimatedSpan>
+            </Terminal>
+          </div>
+
+          {/* STEP 3 */}
+          <div className="space-y-6">
+            <h3 className="text-white font-bold text-lg flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center text-sm font-bold">
+                3
+              </span>
+              Start Development
+            </h3>
+
+            <Terminal className="bg-black border-white/10" sequence={false}>
+              <AnimatedSpan>
+                <TypingAnimation className="text-green-400">
+                  npm run tauri dev
+                </TypingAnimation>
+              </AnimatedSpan>
+            </Terminal>
+          </div>
+
+        </div>
+      </div>
+
+      {/* RIGHT COLUMN */}
+      <div className="flex justify-center items-center">
+        <IconCloud images={cloudImages} />
+      </div>
+
+    </div>
+  </div>
+</section>
       <Footer />
     </div>
   );
