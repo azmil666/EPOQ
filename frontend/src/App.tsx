@@ -153,7 +153,7 @@ function App() {
   </div>
 
   <div className="max-w-7xl mx-auto px-6 relative z-10">
-    <div className="grid lg:grid-cols-2 gap-20 items-start">
+    <div className="grid lg:grid-cols-2 gap-20 items-center">
 
       {/* LEFT COLUMN */}
       <div>
@@ -236,9 +236,9 @@ function App() {
       </div>
 
       {/* RIGHT COLUMN */}
-      <div className="flex justify-center items-center">
-        <IconCloud images={cloudImages} />
-      </div>
+     <div className="flex justify-center items-start pt-32">
+  <IconCloud images={cloudImages} />
+</div>
 
     </div>
   </div>
