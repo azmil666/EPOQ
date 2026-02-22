@@ -90,6 +90,7 @@ export default function Home() {
   const [numWorkers, setNumWorkers] = useState(-1);
   const [model, setModel] = useState('resnet18');
   const [learningRate, setLearningRate] = useState(0.001);
+  const [augmentationConfig, setAugmentationConfig] = useState({horizontalFlip: false,verticalFlip: false,rotation: { enabled: false, degrees: 15 },colorJitter: { enabled: false, brightness: 0.2, contrast: 0.2, saturation: 0.2 },randomResizedCrop: { enabled: false, scaleMin: 0.8, scaleMax: 1.0 }});
   const [zipDataset, setZipDataset] = useState(false);
   const [onlyZip, setOnlyZip] = useState(false);
   const [patience, setPatience] = useState(5);
@@ -440,6 +441,7 @@ useEffect(() => {
       if (onlyZip) args.push('--only_zip');
       args.push('--patience', patience.toString());
       if (resumePath) args.push('--resume', resumePath);
+      args.push('--augmentation', JSON.stringify(augmentationConfig));
 
       let finalCmd: string;
       let finalArgs = args;
@@ -1216,7 +1218,147 @@ const InsightCard = ({ title, children }: any) => (
                   </div>
                 </label>
               </div>
+               {/* Data Augmentation */}
+<div className="pt-6 border-t border-zinc-800/50 space-y-4">
+  <div className="flex items-center gap-2 mb-2">
+    <Activity className="w-4 h-4 text-zinc-400" />
+    <span className="text-xs uppercase tracking-wider text-zinc-500 font-semibold">
+      Data Augmentation
+    </span>
+  </div>
+   <p className="text-xs text-zinc-600">
+  Applies random transformations during training only.
+</p>
+  {/* Horizontal Flip */}
+  <label className="flex items-center justify-between cursor-pointer group">
+    <span className="text-sm text-zinc-400 group-hover:text-zinc-200 transition-colors">
+      Random Horizontal Flip
+    </span>
+    <div
+  className={cn(
+    "w-10 h-6 rounded-full border flex items-center px-1 transition-all",
+    augmentationConfig.horizontalFlip
+      ? "bg-white border-white justify-end"
+      : "bg-zinc-900 border-zinc-700 justify-start"
+  )}
+>
+  <input
+    type="checkbox"
+    className="hidden"
+    checked={augmentationConfig.horizontalFlip}
+    onChange={(e) =>
+      setAugmentationConfig({
+        ...augmentationConfig,
+        horizontalFlip: e.target.checked,
+      })
+    }
+  />
+  <div
+    className={cn(
+      "w-3.5 h-3.5 rounded-full transition-colors",
+      augmentationConfig.horizontalFlip ? "bg-black" : "bg-zinc-500"
+    )}
+  />
+</div>
+  </label>
 
+  {/* Vertical Flip */}
+<label className="flex items-center justify-between cursor-pointer group">
+  <span className="text-sm text-zinc-400 group-hover:text-zinc-200 transition-colors">
+    Random Vertical Flip
+  </span>
+
+  <div
+    className={cn(
+      "w-10 h-6 rounded-full border flex items-center px-1 transition-all",
+      augmentationConfig.verticalFlip
+        ? "bg-white border-white justify-end"
+        : "bg-zinc-900 border-zinc-700 justify-start"
+    )}
+  >
+    <input
+      type="checkbox"
+      className="hidden"
+      checked={augmentationConfig.verticalFlip}
+      onChange={(e) =>
+        setAugmentationConfig({
+          ...augmentationConfig,
+          verticalFlip: e.target.checked,
+        })
+      }
+    />
+    <div
+      className={cn(
+        "w-3.5 h-3.5 rounded-full transition-colors",
+        augmentationConfig.verticalFlip ? "bg-black" : "bg-zinc-500"
+      )}
+    />
+  </div>
+</label>
+{/* Rotation */}
+<div className="space-y-3">
+
+  {/* Enable Rotation */}
+<label className="flex items-center justify-between cursor-pointer group">
+  <span className="text-sm text-zinc-400 group-hover:text-zinc-200 transition-colors">
+    Enable Rotation
+  </span>
+
+  <div
+    className={cn(
+      "w-10 h-6 rounded-full border flex items-center px-1 transition-all",
+      augmentationConfig.rotation.enabled
+        ? "bg-white border-white justify-end"
+        : "bg-zinc-900 border-zinc-700 justify-start"
+    )}
+  >
+    <input
+      type="checkbox"
+      className="hidden"
+      checked={augmentationConfig.rotation.enabled}
+      onChange={(e) =>
+        setAugmentationConfig({
+          ...augmentationConfig,
+          rotation: {
+            ...augmentationConfig.rotation,
+            enabled: e.target.checked,
+          },
+        })
+      }
+    />
+    <div
+      className={cn(
+        "w-3.5 h-3.5 rounded-full transition-colors",
+        augmentationConfig.rotation.enabled ? "bg-black" : "bg-zinc-500"
+      )}
+    />
+  </div>
+</label>
+
+  <div>
+    <label className="text-xs text-zinc-500">Degrees</label>
+    <input
+      type="number"
+      min={0}
+      max={90}
+      value={augmentationConfig.rotation.degrees}
+      disabled={!augmentationConfig.rotation.enabled}
+      onChange={(e) =>
+        setAugmentationConfig({
+          ...augmentationConfig,
+          rotation: {
+            ...augmentationConfig.rotation,
+            degrees: parseInt(e.target.value) || 0,
+          },
+        })
+      }
+      className="w-full bg-black border border-zinc-800 rounded-lg py-2 px-3 text-sm text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed"
+    />
+  </div>
+
+</div>
+  
+</div>
               {/* AutoML Hyperparameter Sweep */}
               <div className="pt-6 border-t border-zinc-800/50 space-y-4">
                 <div className="flex items-center gap-2 mb-2">
