@@ -34,7 +34,24 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 from augmentation_builder import build_transforms
+# ===============================
+# FILTERED IMAGEFOLDER (ignore experiments folder)
+# ===============================
 
+class FilteredImageFolder(datasets.ImageFolder):
+    def find_classes(self, directory):
+        classes = []
+        for entry in os.scandir(directory):
+            if (
+                entry.is_dir()
+                and not entry.name.startswith(".")
+                and entry.name.lower() != "experiments"
+            ):
+                classes.append(entry.name)
+
+        classes.sort()
+        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
+        return classes, class_to_idx
 def main():
     parser = argparse.ArgumentParser(description='PyTorch Trainer')
     parser.add_argument('--path', type=str, required=True, help='Path to dataset')
@@ -56,7 +73,11 @@ def main():
     except Exception:
        aug_config = {}
     data_dir = args.path
-    save_dir = args.save_path if args.save_path else data_dir
+    # Always store runs inside a stable app-level directory
+    base_runs_dir = os.path.join(os.path.expanduser("~"), ".epoq_runs")
+    os.makedirs(base_runs_dir, exist_ok=True)
+
+    save_dir = base_runs_dir
     
     if not os.path.exists(data_dir):
         print(json.dumps({"status": "error", "message": "Directory not found"}), flush=True)
@@ -115,14 +136,14 @@ def main():
         print("Detected structured dataset (train/val/test).", flush=True)
         
         # Train
-        train_dataset = datasets.ImageFolder(train_dir, data_transforms['train'])
+        train_dataset = FilteredImageFolder(train_dir, data_transforms['train'])
         dataloaders['train'] = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
         dataset_sizes['train'] = len(train_dataset)
         class_names = train_dataset.classes
         
         # Val
         if os.path.isdir(val_dir):
-            val_dataset = datasets.ImageFolder(val_dir, data_transforms['val'])
+            val_dataset = FilteredImageFolder(val_dir, data_transforms['val'])
             dataloaders['val'] = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
             dataset_sizes['val'] = len(val_dataset)
         else:
@@ -132,7 +153,7 @@ def main():
             
         # Test
         if os.path.isdir(test_dir):
-            test_dataset = datasets.ImageFolder(test_dir, data_transforms['val'])
+            test_dataset = FilteredImageFolder(test_dir, data_transforms['val'])
             dataloaders['test'] = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
             dataset_sizes['test'] = len(test_dataset)
         else:
@@ -152,7 +173,7 @@ def main():
 
         # 2. Determine split indices
         # We load a dummy dataset just to get lengths and targets
-        dummy_dataset = datasets.ImageFolder(data_dir)
+        dummy_dataset = FilteredImageFolder(data_dir)
         class_names = dummy_dataset.classes
         total_images = len(dummy_dataset)
         
@@ -187,8 +208,8 @@ def main():
             test_idx = subset_test.indices
         
         # True datasets
-        dataset_train_full = datasets.ImageFolder(data_dir, data_transforms['train'])
-        dataset_eval_full = datasets.ImageFolder(data_dir, data_transforms['val']) # No aug for val/test
+        dataset_train_full = FilteredImageFolder(data_dir, data_transforms['train'])
+        dataset_eval_full = FilteredImageFolder(data_dir, data_transforms['val'])
         
         train_dataset = Subset(dataset_train_full, train_idx)
         val_dataset = Subset(dataset_eval_full, val_idx)
@@ -460,7 +481,49 @@ def main():
                 "test_size": dataset_sizes['test']
             }
             print(json.dumps(eval_result), flush=True)
+                    # ===============================
+        # SAVE EXPERIMENT SUMMARY (RUNS)
+        # ===============================
 
+            try:
+                if args.experiment_id:
+                    runs_dir = os.path.join(save_dir, "experiments")
+                    os.makedirs(runs_dir, exist_ok=True)
+
+                    final_val_accuracy = float(val_acc_epoch) if 'val_acc_epoch' in locals() else 0.0
+                    final_train_accuracy = float(train_acc_epoch) if 'train_acc_epoch' in locals() else 0.0
+                    overfitting_gap = final_train_accuracy - final_val_accuracy
+                    efficiency_score = final_val_accuracy / max(num_epochs, 1)
+
+                    summary = {
+                        "id": args.experiment_id,
+                        "model": args.model,
+                        "epochs": num_epochs,
+                        "batch_size": args.batch_size,
+                        "learning_rate": args.learning_rate,
+                        "augmentation": aug_config,
+                        "final_train_accuracy": final_train_accuracy,
+                        "final_validation_accuracy": final_val_accuracy,
+                        "overfitting_gap": overfitting_gap,
+                        "efficiency_score": efficiency_score,
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                    }
+
+                    summary_path = os.path.join(runs_dir, f"{args.experiment_id}.json")
+
+                    with open(summary_path, "w") as f:
+                       json.dump(summary, f, indent=2)
+
+                    print(json.dumps({
+                        "status": "run_saved",
+                        "path": summary_path
+                    }), flush=True)
+
+            except Exception as e:
+                print(json.dumps({
+                    "status": "error",
+                    "message": f"Failed to save run summary: {str(e)}"
+                }), flush=True)
     except Exception as e:
         # Catch and print any error clearly
         error_msg = {"status": "error", "message": f"Exception: {str(e)}"}

@@ -142,7 +142,32 @@ async fn check_dependencies(app: tauri::AppHandle) -> Result<String, String> {
         }
     }
 }
+#[tauri::command]
+fn fetch_runs(save_path: String) -> Result<String, String> {
+    use std::fs;
+    use std::path::Path;
 
+    let experiments_dir = Path::new(&save_path).join("experiments");
+
+    if !experiments_dir.exists() {
+        return Ok("[]".to_string());
+    }
+
+    let mut runs = Vec::new();
+
+    for entry in fs::read_dir(experiments_dir).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let path = entry.path();
+
+        if path.extension().and_then(|s| s.to_str()) == Some("json") {
+            if let Ok(content) = fs::read_to_string(&path) {
+                runs.push(content);
+            }
+        }
+    }
+
+    Ok(format!("[{}]", runs.join(",")))
+}
 /// Analyzes an image dataset and returns statistics.
 #[tauri::command]
 async fn analyze_dataset(app: tauri::AppHandle, path: String) -> Result<String, String> {
@@ -160,7 +185,6 @@ async fn analyze_dataset(app: tauri::AppHandle, path: String) -> Result<String, 
         Err(e) => Err(format!("Dataset analysis failed: {}", e)),
     }
 }
-
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -171,7 +195,9 @@ fn main() {
             run_check_gpu,
             get_system_info,
             check_dependencies,
+            fetch_runs,
             analyze_dataset
+
         ])
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();

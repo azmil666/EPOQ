@@ -6,7 +6,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { resolveResource } from '@tauri-apps/api/path';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FolderOpen, Play, Square, Save, Activity, Terminal, CheckCircle, AlertCircle, BarChart2, Layers, Download, Cpu, Sun, Moon, Database, Zap, Search } from 'lucide-react';
+import { FolderOpen, Play, Square, Save, Activity, Terminal, CheckCircle, AlertCircle, BarChart2, Layers, Download, Cpu, Sun, Moon, Database, Zap, Search, History } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { save } from '@tauri-apps/plugin-dialog';
@@ -112,7 +112,7 @@ export default function Home() {
   const [evalResult, setEvalResult] = useState<EvalResult | null>(null);
   const [matrixImageUrl, setMatrixImageUrl] = useState<string | null>(null);
   const [imageLoadError, setImageLoadError] = useState(false);
-  const [activeTab, setActiveTab] = useState<'logs' | 'charts' | 'results' | 'data' | 'system' | 'compare' | 'insights'>('logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'charts' | 'results' | 'data' | 'system' | 'compare' | 'insights' | 'runs'>('logs');
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   // Tabular / GPU state
   const [tabFile, setTabFile] = useState('');
@@ -135,6 +135,8 @@ export default function Home() {
   const commandRef = useRef<Command<string> | null>(null);
   const childRef = useRef<any>(null);
   const metricsRef = useRef<any[]>([]);
+  const [runs, setRuns] = useState<any[]>([]);
+
   // Dataset Analysis State
   const [datasetStats, setDatasetStats] = useState<any | null>(null);
   const [analyzingDataset, setAnalyzingDataset] = useState(false);
@@ -868,6 +870,27 @@ const InsightCard = ({ title, children }: any) => (
     </div>
   </div>
 );
+const loadRuns = async () => {
+  if (!savePath) return;
+
+  try {
+    const raw = await invoke('fetch_runs', {
+      savePath: savePath
+    });
+
+    const parsed = JSON.parse(raw as string);
+    setRuns(parsed);
+
+  } catch (err) {
+    console.error("Failed to load runs:", err);
+  }
+};
+useEffect(() => {
+  if (activeTab === "runs") {
+    loadRuns();
+  }
+}, [activeTab]);
+
   return (
     <>
       <div data-theme={isLightMode ? 'light' : 'dark'} className={`min-h-screen font-sans bg-black text-zinc-100 theme-transition`}>
@@ -1698,6 +1721,17 @@ const InsightCard = ({ title, children }: any) => (
             >
               <Activity className="w-4 h-4" /> Insights
             </button>
+            <button
+              onClick={() => setActiveTab('runs')}
+              className={cn(
+                "px-6 py-4 text-sm font-medium border-b-2 transition-all flex items-center gap-2",
+                activeTab === 'runs'
+                  ? "border-white text-white"
+                  : "border-transparent text-zinc-500 hover:text-zinc-300"
+              )}
+            >
+              <History className="w-4 h-4" /> Runs
+            </button>
               </div>
 
               <div className="flex-1 overflow-y-auto bg-black/50 scrollbar-thin">
@@ -2375,6 +2409,50 @@ const InsightCard = ({ title, children }: any) => (
     </>
   )}
 </div>
+)}
+{activeTab === 'runs' && (
+  <div className="p-8 space-y-6">
+    {runs.length === 0 && (
+      <div className="text-zinc-500 text-sm">
+        No saved runs found.
+      </div>
+    )}
+
+    {runs.map((run, index) => (
+      <div
+        key={run.id}
+        className={cn(
+          "p-6 rounded-2xl border transition-all",
+          index === 0
+            ? "border-emerald-500 bg-emerald-900/10"
+            : "border-zinc-800 bg-zinc-500/40"
+        )}
+      >
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="text-sm font-mono text-white">
+              {run.model}
+            </div>
+            <div className="text-xs text-zinc-500">
+              {run.timestamp}
+            </div>
+            <div className="text-xs text-zinc-600 mt-1">
+              LR: {run.learning_rate} • BS: {run.batch_size} • Epochs: {run.epochs}
+            </div>
+          </div>
+
+          <div className="text-right">
+            <div className="text-2xl font-bold font-mono text-emerald-400">
+              {(run.final_validation_accuracy * 100).toFixed(2)}%
+            </div>
+            <div className="text-xs text-zinc-500">
+              Gap: {run.overfitting_gap.toFixed(4)}
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
 )}
 
               </div>
