@@ -1226,32 +1226,59 @@ const InsightCard = ({ title, children }: any) => (
       Data Augmentation
     </span>
   </div>
-
+   <p className="text-xs text-zinc-600">
+  Applies random transformations during training only.
+</p>
   {/* Horizontal Flip */}
   <label className="flex items-center justify-between cursor-pointer group">
     <span className="text-sm text-zinc-400 group-hover:text-zinc-200 transition-colors">
       Random Horizontal Flip
     </span>
-    <input
-      type="checkbox"
-      checked={augmentationConfig.horizontalFlip}
-      onChange={(e) =>
-        setAugmentationConfig({
-          ...augmentationConfig,
-          horizontalFlip: e.target.checked,
-        })
-      }
-      className="accent-white"
-    />
+    <div
+  className={cn(
+    "w-10 h-6 rounded-full border flex items-center px-1 transition-all",
+    augmentationConfig.horizontalFlip
+      ? "bg-white border-white justify-end"
+      : "bg-zinc-900 border-zinc-700 justify-start"
+  )}
+>
+  <input
+    type="checkbox"
+    className="hidden"
+    checked={augmentationConfig.horizontalFlip}
+    onChange={(e) =>
+      setAugmentationConfig({
+        ...augmentationConfig,
+        horizontalFlip: e.target.checked,
+      })
+    }
+  />
+  <div
+    className={cn(
+      "w-3.5 h-3.5 rounded-full transition-colors",
+      augmentationConfig.horizontalFlip ? "bg-black" : "bg-zinc-500"
+    )}
+  />
+</div>
   </label>
 
   {/* Vertical Flip */}
-  <label className="flex items-center justify-between cursor-pointer group">
-    <span className="text-sm text-zinc-400 group-hover:text-zinc-200 transition-colors">
-      Random Vertical Flip
-    </span>
+<label className="flex items-center justify-between cursor-pointer group">
+  <span className="text-sm text-zinc-400 group-hover:text-zinc-200 transition-colors">
+    Random Vertical Flip
+  </span>
+
+  <div
+    className={cn(
+      "w-10 h-6 rounded-full border flex items-center px-1 transition-all",
+      augmentationConfig.verticalFlip
+        ? "bg-white border-white justify-end"
+        : "bg-zinc-900 border-zinc-700 justify-start"
+    )}
+  >
     <input
       type="checkbox"
+      className="hidden"
       checked={augmentationConfig.verticalFlip}
       onChange={(e) =>
         setAugmentationConfig({
@@ -1259,30 +1286,78 @@ const InsightCard = ({ title, children }: any) => (
           verticalFlip: e.target.checked,
         })
       }
-      className="accent-white"
     />
-  </label>
+    <div
+      className={cn(
+        "w-3.5 h-3.5 rounded-full transition-colors",
+        augmentationConfig.verticalFlip ? "bg-black" : "bg-zinc-500"
+      )}
+    />
+  </div>
+</label>
+{/* Rotation */}
+<div className="space-y-3">
 
-  {/* Rotation */}
-  <div className="space-y-2">
-    <label className="text-sm text-zinc-400">Rotation (Degrees)</label>
+  {/* Enable Rotation */}
+<label className="flex items-center justify-between cursor-pointer group">
+  <span className="text-sm text-zinc-400 group-hover:text-zinc-200 transition-colors">
+    Enable Rotation
+  </span>
+
+  <div
+    className={cn(
+      "w-10 h-6 rounded-full border flex items-center px-1 transition-all",
+      augmentationConfig.rotation.enabled
+        ? "bg-white border-white justify-end"
+        : "bg-zinc-900 border-zinc-700 justify-start"
+    )}
+  >
+    <input
+      type="checkbox"
+      className="hidden"
+      checked={augmentationConfig.rotation.enabled}
+      onChange={(e) =>
+        setAugmentationConfig({
+          ...augmentationConfig,
+          rotation: {
+            ...augmentationConfig.rotation,
+            enabled: e.target.checked,
+          },
+        })
+      }
+    />
+    <div
+      className={cn(
+        "w-3.5 h-3.5 rounded-full transition-colors",
+        augmentationConfig.rotation.enabled ? "bg-black" : "bg-zinc-500"
+      )}
+    />
+  </div>
+</label>
+
+  <div>
+    <label className="text-xs text-zinc-500">Degrees</label>
     <input
       type="number"
       min={0}
       max={90}
       value={augmentationConfig.rotation.degrees}
+      disabled={!augmentationConfig.rotation.enabled}
       onChange={(e) =>
         setAugmentationConfig({
           ...augmentationConfig,
           rotation: {
-            enabled: true,
+            ...augmentationConfig.rotation,
             degrees: parseInt(e.target.value) || 0,
           },
         })
       }
-      className="w-full bg-black border border-zinc-800 rounded-lg py-2 px-3 text-sm text-zinc-300"
+      className="w-full bg-black border border-zinc-800 rounded-lg py-2 px-3 text-sm text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed"
     />
   </div>
+
+</div>
+  
 </div>
               {/* AutoML Hyperparameter Sweep */}
               <div className="pt-6 border-t border-zinc-800/50 space-y-4">

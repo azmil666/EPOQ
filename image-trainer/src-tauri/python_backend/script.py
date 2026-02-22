@@ -39,7 +39,6 @@ def main():
        aug_config = json.loads(args.augmentation)
     except Exception:
        aug_config = {}
-    print(f"[DEBUG] Augmentation Config: {aug_config}", flush=True)   
     data_dir = args.path
     save_dir = args.save_path if args.save_path else data_dir
     
